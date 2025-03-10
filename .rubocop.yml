@@ -1,0 +1,47 @@
+plugins:
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.1
+  NewCops: enable
+  Include:
+    - 'lib/**/*.rb'
+    - 'spec/**/*.rb'
+  Exclude:
+    - active_call.gemspec
+    - bin/*
+    - 'vendor/**/*'
+    - 'gem/**/*'
+
+Lint/MissingSuper:
+  AllowedParentClasses:
+    - ActiveCall::Base
+
+Metrics/BlockLength:
+  Exclude:
+    - spec/*/**.rb
+
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  EnforcedStyle: compact
+  Exclude:
+    - lib/active_call.rb
+
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: single_quotes
+
+Style/SymbolArray:
+  Enabled: false
