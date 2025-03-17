@@ -20,7 +20,7 @@ gem install active_call
 
 Your child classes should inherit from `ActiveCall::Base`.
 
-Now you can start adding your own service object classes in your gem's `lib` folder.
+Now you can start adding your own service object classes in your gem's `lib` folder or your project's `app/services` folder.
 
 Each service object must define only one public method named `call`.
 
@@ -30,17 +30,23 @@ An `errors` object will be set if you specified any validations that failed befo
 
 There is also a `before_call` hook to set up anything before invoking the `call` method. This only happens after all validations have passed.
 
+You can use the `after_call` hook to add to the `errors` object if anything failed during `call`.
+
+You also get an `around_call` hook.
+
 Define a service object with optional validations and callbacks.
 
 ```ruby
 require 'active_call'
 
-class YourGemName::SomeResource::GetService < ActiveCall::Base
+class YourGemName::SomeResource::CreateService < ActiveCall::Base
   attr_reader :message
 
   validates :message, presence: true
 
   before_call :strip_message
+
+  after_call :confirm_message
 
   def initialize(message: nil)
     @message = message
@@ -55,25 +61,77 @@ class YourGemName::SomeResource::GetService < ActiveCall::Base
   def strip_message
     @message.strip!
   end
+
+  def confirm_message
+    errors.add(:message, :invalid, message: 'cannot be baz') if message == 'baz'
+  end
 end
 ```
 
-You will get a **response** object.
+### Using `.call`
+
+You will get a **response** object on a successful `call` invocation.
 
 ```ruby
-service = YourGemName::SomeResource::GetService.call(message: ' bar ')
-service.valid? # => true
-service.response # => { foo: 'bar' }
+service = YourGemName::SomeResource::CreateService.call(message: ' bar ')
+service.success? # => true
+service.response # => {:foo=>"bar"}
 ```
 
-And an **errors** object when validation failed.
+Or if you added to the **errors** object in the `after_call` hook.
 
 ```ruby
-service = YourGemName::SomeResource::GetService.call(message: '')
-service.valid? # => false
+service = YourGemName::SomeResource::CreateService.call(message: 'baz')
+service.success? # => false
+service.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=invalid, options={:message=>"cannot be baz"}>]>
+service.errors.full_messages # => ["Message cannot be baz"]
+service.response # => {:foo=>"baz"}
+```
+
+An **errors** object when validation fails.
+
+```ruby
+service = YourGemName::SomeResource::CreateService.call(message: '')
+service.success? # => false
+service.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=blank, options={}>]>
 service.errors.full_messages # => ["Message can't be blank"]
 service.response # => nil
 ```
+
+### Using `.call!`
+
+You will get a **response** object on a successful `call` invocation.
+
+```ruby
+service = YourGemName::SomeResource::CreateService.call!(message: ' bar ')
+service.success? # => true
+service.response # => {:foo=>"bar"}
+```
+
+Or an `ActiveCall::RequestError` exception gets raised if you add to the **errors** object in the `after_call` hook.
+
+```ruby
+begin
+  service = YourGemName::SomeResource::CreateService.call!(message: 'baz')
+rescue ActiveCall::RequestError => exception
+  exception.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=invalid, options={:message=>"cannot be baz"}>]>
+  exception.errors.full_messages # => ["Message cannot be baz"]
+  exception.response # => {:foo=>"baz"}
+end
+```
+
+An `ActiveCall::ValidationError` exception gets raised when validation fails.
+
+```ruby
+begin
+  service = YourGemName::SomeResource::CreateService.call!(message: '')
+rescue ActiveCall::ValidationError => exception
+  exception.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=blank, options={}>]>
+  exception.errors.full_messages # => ["Message can't be blank"]
+end
+```
+
+## Configuration
 
 If you have secrets, use a **configuration** block.
 
@@ -89,7 +147,7 @@ class YourGemName::BaseService < ActiveCall::Base
 end
 ```
 
-Then in your application code you can overrite the configuration defaults.
+Then in your application code you can overwite the configuration defaults.
 
 ```ruby
 YourGemName::BaseService.configure do |config|
