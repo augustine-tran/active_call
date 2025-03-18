@@ -185,7 +185,9 @@ RSpec.describe ActiveCall::Base do
         Class.new(ActiveCall::Base) do
           attr_accessor :input
 
-          after_call :validate_input
+          validate on: :response do
+            errors.add(:base, 'Service failed')
+          end
 
           def initialize(input)
             @input = input
@@ -193,12 +195,6 @@ RSpec.describe ActiveCall::Base do
 
           def call
             "Processed: #{input}"
-          end
-
-          private
-
-          def validate_input
-            errors.add(:base, 'Service failed')
           end
         end
       end
@@ -253,11 +249,7 @@ RSpec.describe ActiveCall::Base do
 
       it 'returns false after a failed call' do
         failing_service = Class.new(TestService) do
-          after_call :validate_input
-
-          private
-
-          def validate_input
+          validate on: :response do
             errors.add(:base, 'Something went wrong')
           end
         end
@@ -305,11 +297,7 @@ RSpec.describe ActiveCall::Base do
     context 'when response is set' do
       it 'returns true regardless of request errors' do
         failing_service = Class.new(TestService) do
-          after_call :validate_input
-
-          private
-
-          def validate_input
+          validate on: :response do
             errors.add(:base, 'Something went wrong')
           end
         end
@@ -323,6 +311,71 @@ RSpec.describe ActiveCall::Base do
         expect(service.valid?).to be true
         expect(service.errors).to be_empty
       end
+    end
+  end
+
+  describe '.abstract_class' do
+    it 'is nil by default' do
+      expect(described_class.abstract_class).to be_nil
+    end
+
+    it 'can be set to true' do
+      klass = Class.new(described_class)
+      klass.abstract_class = true
+      expect(klass.abstract_class).to be true
+    end
+  end
+
+  describe '.abstract_class?' do
+    it 'returns false when abstract_class is not set' do
+      klass = Class.new(described_class)
+      expect(klass.abstract_class?).to be false
+    end
+
+    it 'returns true when abstract_class is set to true' do
+      klass = Class.new(described_class)
+      klass.abstract_class = true
+      expect(klass.abstract_class?).to be true
+    end
+  end
+
+  describe '#call behavior with abstract classes' do
+    it 'raises NotImplementedError when call is not implemented in non-abstract subclass' do
+      klass = Class.new(described_class) do
+        # call method not implemented.
+      end
+      stub_const('NonAbstractService', klass)
+
+      service = NonAbstractService.new
+      expect { service.call }.to raise_error(NotImplementedError, /Subclasses must implement a call method/)
+    end
+
+    it 'does not raise NotImplementedError when subclass is marked as abstract' do
+      abstract_klass = Class.new(described_class) do
+        self.abstract_class = true
+      end
+      stub_const('AbstractService', abstract_klass)
+
+      service = AbstractService.new
+      expect { service.call }.not_to raise_error
+    end
+
+    it 'works correctly with inheritance chain from abstract classes' do
+      abstract_klass = Class.new(described_class) do
+        self.abstract_class = true
+      end
+
+      implementation_klass = Class.new(abstract_klass) do
+        def call
+          'implemented'
+        end
+      end
+
+      stub_const('AbstractBaseService', abstract_klass)
+      stub_const('ConcreteService', implementation_klass)
+
+      service = ConcreteService.new
+      expect(service.call).to eq('implemented')
     end
   end
 end

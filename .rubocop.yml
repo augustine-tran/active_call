@@ -15,6 +15,9 @@ AllCops:
     - 'vendor/**/*'
     - 'gem/**/*'
 
+Layout/LineEndStringConcatenationIndentation:
+  EnforcedStyle: indented
+
 Lint/MissingSuper:
   AllowedParentClasses:
     - ActiveCall::Base

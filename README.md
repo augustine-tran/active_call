@@ -20,19 +20,29 @@ gem install active_call
 
 Your child classes should inherit from `ActiveCall::Base`.
 
-Now you can start adding your own service object classes in your gem's `lib` folder or your project's `app/services` folder.
+You can add your own service object classes in your gem's `lib` folder or your project's `app/services` folder.
 
 Each service object must define only one public method named `call`.
 
-A `response` attribute is set with the result of the `call` method.
+### Logic Flow
 
-An `errors` object will be set if you specified any validations that failed before the `call` method could be invoked.
+1. **Before** invoking `call`.
 
-There is also a `before_call` hook to set up anything before invoking the `call` method. This only happens after all validations have passed.
+  - Validate the request with `validates`.
 
-You can use the `after_call` hook to add to the `errors` object if anything failed during `call`.
+  - Use the `before_call` hook to set up anything **after validation** passes.
 
-You also get an `around_call` hook.
+2. **During** `call` invocation.
+
+  - A `response` attribute gets set with the result of the `call` method.
+
+3. **After** invoking `call`.
+
+  - Validate the response with `validate, on: :response`.
+
+  - Use the `after_call` hook to set up anything **after response validation** passes.
+
+### Example Service Object
 
 Define a service object with optional validations and callbacks.
 
@@ -44,9 +54,13 @@ class YourGemName::SomeResource::CreateService < ActiveCall::Base
 
   validates :message, presence: true
 
+  validate on: :response do
+    errors.add(:message, :invalid, message: 'cannot be baz') if response[:foo] == 'baz'
+  end
+
   before_call :strip_message
 
-  after_call :confirm_message
+  after_call :log_response
 
   def initialize(message: nil)
     @message = message
@@ -62,33 +76,15 @@ class YourGemName::SomeResource::CreateService < ActiveCall::Base
     @message.strip!
   end
 
-  def confirm_message
-    errors.add(:message, :invalid, message: 'cannot be baz') if message == 'baz'
+  def log_response
+    puts "Successfully called #{response}"
   end
 end
 ```
 
 ### Using `.call`
 
-You will get a **response** object on a successful `call` invocation.
-
-```ruby
-service = YourGemName::SomeResource::CreateService.call(message: ' bar ')
-service.success? # => true
-service.response # => {:foo=>"bar"}
-```
-
-Or if you added to the **errors** object in the `after_call` hook.
-
-```ruby
-service = YourGemName::SomeResource::CreateService.call(message: 'baz')
-service.success? # => false
-service.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=invalid, options={:message=>"cannot be baz"}>]>
-service.errors.full_messages # => ["Message cannot be baz"]
-service.response # => {:foo=>"baz"}
-```
-
-An **errors** object when validation fails.
+You will get an **errors** object when validation fails.
 
 ```ruby
 service = YourGemName::SomeResource::CreateService.call(message: '')
@@ -98,9 +94,38 @@ service.errors.full_messages # => ["Message can't be blank"]
 service.response # => nil
 ```
 
+A **response** object on a successful `call` invocation.
+
+```ruby
+service = YourGemName::SomeResource::CreateService.call(message: ' bar ')
+service.success? # => true
+service.response # => {:foo=>"bar"}
+```
+
+And an **errors** object if you added errors during the `validate, on: :response` validation.
+
+```ruby
+service = YourGemName::SomeResource::CreateService.call(message: 'baz')
+service.success? # => false
+service.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=invalid, options={:message=>"cannot be baz"}>]>
+service.errors.full_messages # => ["Message cannot be baz"]
+service.response # => {:foo=>"baz"}
+```
+
 ### Using `.call!`
 
-You will get a **response** object on a successful `call` invocation.
+An `ActiveCall::ValidationError` **exception** gets raised when validation fails.
+
+```ruby
+begin
+  service = YourGemName::SomeResource::CreateService.call!(message: '')
+rescue ActiveCall::ValidationError => exception
+  exception.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=blank, options={}>]>
+  exception.errors.full_messages # => ["Message can't be blank"]
+end
+```
+
+A **response** object on a successful `call` invocation.
 
 ```ruby
 service = YourGemName::SomeResource::CreateService.call!(message: ' bar ')
@@ -108,7 +133,7 @@ service.success? # => true
 service.response # => {:foo=>"bar"}
 ```
 
-Or an `ActiveCall::RequestError` exception gets raised if you add to the **errors** object in the `after_call` hook.
+And an `ActiveCall::RequestError` **exception** gets raised if you added errors during the `validate, on: :response` validation.
 
 ```ruby
 begin
@@ -120,30 +145,15 @@ rescue ActiveCall::RequestError => exception
 end
 ```
 
-An `ActiveCall::ValidationError` exception gets raised when validation fails.
-
-```ruby
-begin
-  service = YourGemName::SomeResource::CreateService.call!(message: '')
-rescue ActiveCall::ValidationError => exception
-  exception.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=blank, options={}>]>
-  exception.errors.full_messages # => ["Message can't be blank"]
-end
-```
-
 ## Configuration
 
 If you have secrets, use a **configuration** block.
 
 ```ruby
-require 'net/http'
-
 class YourGemName::BaseService < ActiveCall::Base
-  config_accessor :api_key, default: ENV['API_KEY'], instance_writer: false
+  self.abstract_class = true
 
-  def call
-    Net::HTTP.get_response(URI("http://example.com/api?#{URI.encode_www_form(api_key: api_key)}"))
-  end
+  config_accessor :api_key, default: ENV['API_KEY'], instance_writer: false
 end
 ```
 
@@ -152,6 +162,18 @@ Then in your application code you can overwite the configuration defaults.
 ```ruby
 YourGemName::BaseService.configure do |config|
   config.api_key = Rails.application.credentials.api_key || ENV['API_KEY']
+end
+```
+
+And implement a service object like so.
+
+```ruby
+require 'net/http'
+
+class YourGemName::SomeResource::CreateService < YourGemName::BaseService
+  def call
+    Net::HTTP.get_response(URI("http://example.com/api?#{URI.encode_www_form(api_key: api_key)}"))
+  end
 end
 ```
 
