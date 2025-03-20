@@ -32,11 +32,15 @@ class ActiveCall::Base
       @abstract_class == true
     end
 
+    # TODO: Refactor `call` and `call!`. The only differences are the two lines raising exceptions.
     def call(...)
       service_object = new(...)
+      service_object.instance_variable_set(:@bang, false)
       return service_object if service_object.invalid?(except_on: :response)
 
       service_object.run_callbacks(:call) do
+        next if service_object.is_a?(Enumerable)
+
         service_object.instance_variable_set(:@response, service_object.call)
         service_object.validate(:response)
 
@@ -48,9 +52,12 @@ class ActiveCall::Base
 
     def call!(...)
       service_object = new(...)
+      service_object.instance_variable_set(:@bang, true)
       raise ActiveCall::ValidationError, service_object.errors if service_object.invalid?(except_on: :response)
 
       service_object.run_callbacks(:call) do
+        next if service_object.is_a?(Enumerable)
+
         service_object.instance_variable_set(:@response, service_object.call)
         service_object.validate(:response)
 
@@ -71,6 +78,10 @@ class ActiveCall::Base
     return true if response
 
     super
+  end
+
+  def bang?
+    !!@bang
   end
 
   def call

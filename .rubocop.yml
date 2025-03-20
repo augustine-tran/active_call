@@ -26,6 +26,11 @@ Metrics/BlockLength:
   Exclude:
     - spec/*/**.rb
 
+Metrics/MethodLength:
+  AllowedMethods:
+    - call
+    - call!
+
 RSpec/ExampleLength:
   Enabled: false
 
