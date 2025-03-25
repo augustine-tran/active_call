@@ -2,7 +2,7 @@
 
 ## [0.2.0] - 2025-03-20
 
-- Added method `.call!` with a bang, which will raise an `ActiveCall::ValidationError` exception when validation fails and an `ActiveCall::RequestError` exception when errors were added to the service object in the `after_call` callback.
+- Added method `.call!` with a bang, which will raise an `ActiveCall::ValidationError` exception when validation fails and an `ActiveCall::RequestError` exception when errors were added to the service object in the `validate on: :response` block.
 - Use new method `success?` instead of `valid?`.
 - Method `valid?` will return `true` if the service object passed validation and was able to make the `call` method.
 - Use `validate, on: :response` to validate the response object.

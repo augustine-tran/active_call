@@ -1,5 +1,7 @@
 # Active Call
 
+[![Gem Version](https://badge.fury.io/rb/active_call.svg?icon=si%3Arubygems)](https://badge.fury.io/rb/active_call)
+
 Active Call provides a standardized way to create service objects.
 
 ## Installation
@@ -49,7 +51,7 @@ Define a service object with optional validations and callbacks.
 ```ruby
 require 'active_call'
 
-class YourGemName::SomeResource::CreateService < ActiveCall::Base
+class YourGem::SomeResource::CreateService < ActiveCall::Base
   attr_reader :message
 
   validates :message, presence: true
@@ -82,12 +84,12 @@ class YourGemName::SomeResource::CreateService < ActiveCall::Base
 end
 ```
 
-### Using `.call`
+### Using `call`
 
 You will get an **errors** object when validation fails.
 
 ```ruby
-service = YourGemName::SomeResource::CreateService.call(message: '')
+service = YourGem::SomeResource::CreateService.call(message: '')
 service.success? # => false
 service.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=blank, options={}>]>
 service.errors.full_messages # => ["Message can't be blank"]
@@ -97,7 +99,7 @@ service.response # => nil
 A **response** object on a successful `call` invocation.
 
 ```ruby
-service = YourGemName::SomeResource::CreateService.call(message: ' bar ')
+service = YourGem::SomeResource::CreateService.call(message: ' bar ')
 service.success? # => true
 service.response # => {:foo=>"bar"}
 ```
@@ -105,20 +107,20 @@ service.response # => {:foo=>"bar"}
 And an **errors** object if you added errors during the `validate, on: :response` validation.
 
 ```ruby
-service = YourGemName::SomeResource::CreateService.call(message: 'baz')
+service = YourGem::SomeResource::CreateService.call(message: 'baz')
 service.success? # => false
 service.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=invalid, options={:message=>"cannot be baz"}>]>
 service.errors.full_messages # => ["Message cannot be baz"]
 service.response # => {:foo=>"baz"}
 ```
 
-### Using `.call!`
+### Using `call!`
 
 An `ActiveCall::ValidationError` **exception** gets raised when validation fails.
 
 ```ruby
 begin
-  service = YourGemName::SomeResource::CreateService.call!(message: '')
+  service = YourGem::SomeResource::CreateService.call!(message: '')
 rescue ActiveCall::ValidationError => exception
   exception.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=blank, options={}>]>
   exception.errors.full_messages # => ["Message can't be blank"]
@@ -128,7 +130,7 @@ end
 A **response** object on a successful `call` invocation.
 
 ```ruby
-service = YourGemName::SomeResource::CreateService.call!(message: ' bar ')
+service = YourGem::SomeResource::CreateService.call!(message: ' bar ')
 service.success? # => true
 service.response # => {:foo=>"bar"}
 ```
@@ -137,7 +139,7 @@ And an `ActiveCall::RequestError` **exception** gets raised if you added errors 
 
 ```ruby
 begin
-  service = YourGemName::SomeResource::CreateService.call!(message: 'baz')
+  service = YourGem::SomeResource::CreateService.call!(message: 'baz')
 rescue ActiveCall::RequestError => exception
   exception.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=invalid, options={:message=>"cannot be baz"}>]>
   exception.errors.full_messages # => ["Message cannot be baz"]
@@ -150,17 +152,17 @@ end
 If you have secrets, use a **configuration** block.
 
 ```ruby
-class YourGemName::BaseService < ActiveCall::Base
+class YourGem::BaseService < ActiveCall::Base
   self.abstract_class = true
 
   config_accessor :api_key, default: ENV['API_KEY'], instance_writer: false
 end
 ```
 
-Then in your application code you can overwite the configuration defaults.
+Then in your application code you can override the configuration defaults.
 
 ```ruby
-YourGemName::BaseService.configure do |config|
+YourGem::BaseService.configure do |config|
   config.api_key = Rails.application.credentials.api_key || ENV['API_KEY']
 end
 ```
@@ -170,7 +172,7 @@ And implement a service object like so.
 ```ruby
 require 'net/http'
 
-class YourGemName::SomeResource::CreateService < YourGemName::BaseService
+class YourGem::SomeResource::CreateService < YourGem::BaseService
   def call
     Net::HTTP.get_response(URI("http://example.com/api?#{URI.encode_www_form(api_key: api_key)}"))
   end
@@ -201,6 +203,7 @@ Now start adding your service objects in the `lib` directory and make sure they 
 
 ## Gems Using Active Call
 
+- [nCino KYC DocFox](https://github.com/kobusjoubert/doc_fox)
 - [Zoho Sign](https://github.com/kobusjoubert/zoho_sign)
 
 ## Development

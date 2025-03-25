@@ -14,13 +14,13 @@ class ActiveCall::Base
     # Abstract classes are not meant to be instantiated directly, but rather inherited from.
     # The `call` method doesn't need to be implemented in abstract classes.
     #
-    # Example:
+    # ==== Examples
     #
-    #   class YourGemName::BaseService < ActiveCall::Base
+    #   class YourGem::BaseService < ActiveCall::Base
     #     self.abstract_class = true
     #   end
     #
-    #   class YourGemName::SomeResource::CreateService < YourGemName::BaseService
+    #   class YourGem::SomeResource::CreateService < YourGem::BaseService
     #     def call
     #       # Implementation specific to this service.
     #     end
@@ -33,6 +33,33 @@ class ActiveCall::Base
     end
 
     # TODO: Refactor `call` and `call!`. The only differences are the two lines raising exceptions.
+
+    # Using `call`
+    #
+    # ==== Examples
+    #
+    # You will get an `errors` object when validation fails.
+    #
+    #   service = YourGem::SomeResource::CreateService.call(message: '')
+    #   service.success? # => false
+    #   service.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=blank, options={}>]>
+    #   service.errors.full_messages # => ["Message can't be blank"]
+    #   service.response # => nil
+    #
+    # A `response` object on a successful `call` invocation.
+    #
+    #   service = YourGem::SomeResource::CreateService.call(message: ' bar ')
+    #   service.success? # => true
+    #   service.response # => {:foo=>"bar"}
+    #
+    # And an `errors` object if you added errors during the `validate, on: :response` validation.
+    #
+    #   service = YourGem::SomeResource::CreateService.call(message: 'baz')
+    #   service.success? # => false
+    #   service.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=invalid, options={:message=>"cannot be baz"}>]>
+    #   service.errors.full_messages # => ["Message cannot be baz"]
+    #   service.response # => {:foo=>"baz"}
+    #
     def call(...)
       service_object = new(...)
       service_object.instance_variable_set(:@bang, false)
@@ -50,6 +77,36 @@ class ActiveCall::Base
       service_object
     end
 
+    # Using `call!`
+    #
+    # ==== Examples
+    #
+    # An `ActiveCall::ValidationError` exception gets raised when validation fails.
+    #
+    #   begin
+    #     service = YourGem::SomeResource::CreateService.call!(message: '')
+    #   rescue ActiveCall::ValidationError => exception
+    #     exception.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=blank, options={}>]>
+    #     exception.errors.full_messages # => ["Message can't be blank"]
+    #   end
+    #
+    # A `response` object on a successful `call` invocation.
+    #
+    #   service = YourGem::SomeResource::CreateService.call!(message: ' bar ')
+    #   service.success? # => true
+    #   service.response # => {:foo=>"bar"}
+    #
+    # And an `ActiveCall::RequestError` exception gets raised if you added errors during the `validate, on: :response`
+    # validation.
+    #
+    #   begin
+    #     service = YourGem::SomeResource::CreateService.call!(message: 'baz')
+    #   rescue ActiveCall::RequestError => exception
+    #     exception.errors # => #<ActiveModel::Errors [#<ActiveModel::Error attribute=message, type=invalid, options={:message=>"cannot be baz"}>]>
+    #     exception.errors.full_messages # => ["Message cannot be baz"]
+    #     exception.response # => {:foo=>"baz"}
+    #   end
+    #
     def call!(...)
       service_object = new(...)
       service_object.instance_variable_set(:@bang, true)
