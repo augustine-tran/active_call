@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.2.1] - 2025-03-25
+
+- Gemspec `changelog_uri` fixed.
+
 ## [0.2.0] - 2025-03-20
 
 - Added method `.call!` with a bang, which will raise an `ActiveCall::ValidationError` exception when validation fails and an `ActiveCall::RequestError` exception when errors were added to the service object in the `validate on: :response` block.
