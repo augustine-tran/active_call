@@ -201,10 +201,14 @@ spec.add_dependency 'active_call'
 
 Now start adding your service objects in the `lib` directory and make sure they inherit from `ActiveCall::Base`.
 
+## Active Call Extensions
+
+- [Active Call - API](https://rubygems.org/gems/active_call-api)
+
 ## Gems Using Active Call
 
-- [nCino KYC DocFox](https://github.com/kobusjoubert/doc_fox)
-- [Zoho Sign](https://github.com/kobusjoubert/zoho_sign)
+- [nCino KYC DocFox](https://rubygems.org/gems/active_call-zoho_sign/active_call-doc_fox)
+- [Zoho Sign](https://rubygems.org/gems/active_call-zoho_sign)
 
 ## Development
 
