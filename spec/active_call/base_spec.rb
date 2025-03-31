@@ -207,6 +207,94 @@ RSpec.describe ActiveCall::Base do
         expect { FailingTestService.call!('test') }.to raise_error(ActiveCall::RequestError)
       end
     end
+
+    context 'when request validations fail' do
+      let(:request_validation_class) do
+        Class.new(ActiveCall::Base) do
+          attr_accessor :input
+
+          validate on: :request do
+            errors.add(:base, 'Request validation failed')
+          end
+
+          def initialize(input)
+            @input = input
+          end
+
+          def call
+            "Processed: #{input}"
+          end
+        end
+      end
+
+      before do
+        stub_const('RequestValidationService', request_validation_class)
+      end
+
+      it 'raises a RequestError' do
+        expect { RequestValidationService.call!('test') }.to raise_error(ActiveCall::RequestError)
+      end
+
+      it 'captures the validation errors in the exception' do
+        RequestValidationService.call!('test')
+      rescue ActiveCall::RequestError => e
+        expect(e.errors.full_messages).to include('Request validation failed')
+      end
+    end
+  end
+
+  describe 'validation phases' do
+    context 'with request validation' do
+      let(:service_class) do
+        Class.new(ActiveCall::Base) do
+          attr_accessor :input
+          attr_reader :validation_steps
+
+          def initialize(input)
+            @input = input
+            @validation_steps = []
+          end
+
+          validates :input, presence: true
+
+          validate on: :request do
+            @validation_steps << :request
+            errors.add(:request, 'failed') if input == 'invalid_request'
+          end
+
+          def call
+            "Processed: #{input}"
+          end
+        end
+      end
+
+      before do
+        stub_const('ValidationPhasesService', service_class)
+      end
+
+      it 'runs request validations after initial validations' do
+        service = ValidationPhasesService.call('valid')
+        expect(service.validation_steps).to eq([:request])
+        expect(service.success?).to be true
+        expect(service.response).to eq('Processed: valid')
+      end
+
+      it 'stops at request validation if it fails' do
+        service = ValidationPhasesService.call('invalid_request')
+        expect(service.validation_steps).to eq([:request])
+        expect(service.success?).to be false
+        expect(service.errors[:request]).to include('failed')
+        expect(service.response).to be_nil
+      end
+
+      it 'does not proceed to request validation if initial validations fail' do
+        service = ValidationPhasesService.call(nil)
+        expect(service.validation_steps).to be_empty
+        expect(service.success?).to be false
+        expect(service.errors[:input]).to include("can't be blank")
+        expect(service.response).to be_nil
+      end
+    end
   end
 
   describe '#success?' do

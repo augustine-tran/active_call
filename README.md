@@ -30,9 +30,11 @@ Each service object must define only one public method named `call`.
 
 1. **Before** invoking `call`.
 
-  - Validate the request with `validates`.
+  - Validate the service with `validates`.
 
   - Use the `before_call` hook to set up anything **after validation** passes.
+
+  - Validate the request with `validate on: :request`.
 
 2. **During** `call` invocation.
 
@@ -40,7 +42,7 @@ Each service object must define only one public method named `call`.
 
 3. **After** invoking `call`.
 
-  - Validate the response with `validate, on: :response`.
+  - Validate the response with `validate on: :response`.
 
   - Use the `after_call` hook to set up anything **after response validation** passes.
 
@@ -52,15 +54,19 @@ Define a service object with optional validations and callbacks.
 require 'active_call'
 
 class YourGem::SomeResource::CreateService < ActiveCall::Base
-  attr_reader :message
+  attr_reader :message, :another_service
 
   validates :message, presence: true
+
+  validate on: :request do
+    errors.merge!(another_service.errors) unless another_service.success?
+  end
 
   validate on: :response do
     errors.add(:message, :invalid, message: 'cannot be baz') if response[:foo] == 'baz'
   end
 
-  before_call :strip_message
+  before_call :call_another_service, :strip_message
 
   after_call :log_response
 
@@ -73,6 +79,10 @@ class YourGem::SomeResource::CreateService < ActiveCall::Base
   end
 
   private
+
+  def call_another_service
+    @another_service = YourGem::SomeResource::GetService.call(id: '1')
+  end
 
   def strip_message
     @message.strip!
@@ -207,8 +217,8 @@ Now start adding your service objects in the `lib` directory and make sure they 
 
 ## Gems Using Active Call
 
-- [nCino KYC DocFox](https://rubygems.org/gems/active_call-zoho_sign/active_call-doc_fox)
-- [Zoho Sign](https://rubygems.org/gems/active_call-zoho_sign)
+- [Active Call - nCino KYC DocFox](https://rubygems.org/gems/active_call-doc_fox)
+- [Active Call - Zoho Sign](https://rubygems.org/gems/active_call-zoho_sign)
 
 ## Development
 

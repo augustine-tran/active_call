@@ -18,9 +18,16 @@ AllCops:
 Layout/LineEndStringConcatenationIndentation:
   EnforcedStyle: indented
 
+Layout/LineLength:
+  AllowedPatterns:
+    - '#'
+
 Lint/MissingSuper:
   AllowedParentClasses:
     - ActiveCall::Base
+
+Metrics/AbcSize:
+  Enabled: false
 
 Metrics/BlockLength:
   Exclude:
