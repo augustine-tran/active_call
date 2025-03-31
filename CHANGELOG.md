@@ -1,3 +1,7 @@
+## [0.3.0] - 2025-03-31
+
+- Added `validate on: :request` which runs after `before_call` and before invoking `call`'.
+
 ## [0.2.1] - 2025-03-25
 
 - Gemspec `changelog_uri` fixed.
