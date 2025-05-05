@@ -46,6 +46,10 @@ Each service object must define only one public method named `call`.
 
   - Use the `after_call` hook to set up anything **after response validation** passes.
 
+  - Return the service object.
+
+If any validations fail during this flow, the service object gets returned without continuing with the subsequent steps.
+
 ### Example Service Object
 
 Define a service object with optional validations and callbacks.
@@ -219,6 +223,7 @@ Now start adding your service objects in the `lib` directory and make sure they 
 
 - [Active Call - nCino KYC DocFox](https://rubygems.org/gems/active_call-doc_fox)
 - [Active Call - Zoho Sign](https://rubygems.org/gems/active_call-zoho_sign)
+- [Active Call - Zoho CRM](https://rubygems.org/gems/active_call-zoho_crm)
 
 ## Development
 
