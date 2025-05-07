@@ -1,3 +1,7 @@
+## [0.3.1] - 2025-05-07
+
+- Update repository urls to activecall organization.
+
 ## [0.3.0] - 2025-03-31
 
 - Added `validate on: :request` which runs after `before_call` and before invoking `call`'.
