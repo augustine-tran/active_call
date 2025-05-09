@@ -1,3 +1,7 @@
+## [0.3.3] - 2025-05-09
+
+- Gemspec description formatting.
+
 ## [0.3.2] - 2025-05-09
 
 - Gemspec description update.
