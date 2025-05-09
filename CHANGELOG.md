@@ -1,3 +1,7 @@
+## [0.3.2] - 2025-05-09
+
+- Gemspec description update.
+
 ## [0.3.1] - 2025-05-07
 
 - Update repository urls to activecall organization.
