@@ -8,8 +8,12 @@ Gem::Specification.new do |spec|
   spec.authors = ['Kobus Joubert']
   spec.email = ['kobus@translate3d.com']
 
-  spec.summary = 'Active Call'
-  spec.description = 'Active Call provides a standardized way to create service objects.'
+  spec.summary = 'Standardized way to build service objects'
+  spec.description = %w{
+    Active Call provides a standardized way to build service objects.
+    It helps you extract complex business logic from models and controllers, and keeps your code clean and organized.
+    Encouraging single responsibility improves readability, testability, and long-term maintainability.
+  }
   spec.homepage = 'https://github.com/activecall/active_call'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.1.0'
