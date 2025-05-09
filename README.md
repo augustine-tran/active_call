@@ -2,7 +2,19 @@
 
 [![Gem Version](https://badge.fury.io/rb/active_call.svg?icon=si%3Arubygems)](https://badge.fury.io/rb/active_call)
 
-Active Call provides a standardized way to create service objects.
+Active Call provides a standardized way to build service objects.
+
+It helps you extract complex business logic from models and controllers, and keeps your code clean and organized.
+
+Encouraging single responsibility improves readability, testability, and long-term maintainability.
+
+<div align="center">
+  <a href="https://platform45.com?utm_source=github&utm_content=active_call">
+    <picture>
+      <img src="https://github.com/user-attachments/assets/19fd40df-2ce9-4f30-8120-d53f3fbf9f07">
+    </picture>
+  </a>
+</div>
 
 ## Installation
 
