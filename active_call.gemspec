@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ['kobus@translate3d.com']
 
   spec.summary = 'Standardized way to build service objects'
-  spec.description = %w{
+  spec.description = %{
     Active Call provides a standardized way to build service objects.
     It helps you extract complex business logic from models and controllers, and keeps your code clean and organized.
     Encouraging single responsibility improves readability, testability, and long-term maintainability.
